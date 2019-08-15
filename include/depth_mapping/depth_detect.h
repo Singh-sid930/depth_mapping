@@ -9,7 +9,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <math.h>
-#include <nav_msg/OccupancyGrid.h>
+// #include <nav_msg/OccupancyGrid.h>
 // #include <Eigen/Dense>
 #include <Eigen/Geometry>
 namespace depth_detect{
@@ -25,11 +25,14 @@ public:
 
   }
 private:
-  #define ANGLE_REDUCTION = 0.02
+  #define ANGLE_REDUCTION 0.02
+  const float P_HIT  =  0.6
+  const float P_MISS = 0.3
   Eigen::MatrixXi dynamic_grid_{Eigen::MatrixXi::Zero(1000,1000)};
   Eigen::MatrixXi static_grid_;
   sensor_msgs::PointCloud out_pointcloud_;
-  nav_msg::OccupancyGrid confidence_grid_;
+  std::vector<uint8_t> map_data_{std::vector<uint8_t>(1000000,50)}; //initialize prior with 0.5 or 50
+  // nav_msg::OccupancyGrid confidence_grid_;
   ros::NodeHandle pnh_;
   float cloud_width_;
   float cloud_height_;
@@ -46,7 +49,7 @@ private:
   int* trans2grid(float x, float y);
   void updateGrid(float angle_min, float angle_max);
   void updateStaticGrid();
-  void updateConfidenceGrid();
+  void updateConfidenceGrid(int index,float prior_prob);
   void publishGrids();
 
 };
