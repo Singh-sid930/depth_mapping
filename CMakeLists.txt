@@ -12,7 +12,12 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+	image_transport
+	tf
+	cv_bridge
 )
+find_package(Eigen3 REQUIRED)
+find_package(OpenCV)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -119,6 +124,8 @@ catkin_package(
 include_directories(
  include
   ${catkin_INCLUDE_DIRS}
+	${Eigen_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library

@@ -1,8 +1,9 @@
 #include "depth_mapping/depth_detect.h"
+
 // #include <math.h>
 
 
-
+//****************************************************************************//
 void depth_detect::DetectFreeSpace::conv2dScan(){
 
   for (auto i:out_pointcloud_.points){
@@ -26,9 +27,11 @@ void depth_detect::DetectFreeSpace::conv2dScan(){
   angle_min = angle_min + ANGLE_REDUCTION;
   angle_max = angle_max - ANGLE_REDUCTION;
   updateGrid(angle_min,angle_max);
-  updateConfidenceGrid(angle_min,angle_max);
 
 }
+
+//***************************************************************************//
+
 void depth_detect::DetectFreeSpace::updateGrid(float angle_min, float angle_max){
 std::vector<int> index_arr;
 std::vector<uint8_t> prior_arr;
@@ -40,7 +43,7 @@ while(it != it_upper){
   float x = it->second * cos(it->first);
   float y = it->second * sin(it->first);
   int* coordinates = trans2grid(x,y);
-  float prior_prob = dynamic_grid_(coordinates[0],coordinates[1]);
+  uint8_t prior_prob = dynamic_grid_(coordinates[0],coordinates[1]);
   prior_arr.push_back(prior_prob);
   dynamic_grid_(coordinates[0],coordinates[1]) = 1;
   int index = coordinates[0] + coordinates[1]*1000;
@@ -51,6 +54,8 @@ while(it != it_upper){
 updateConfidenceGrid(index_arr,prior_arr);
 
 }
+
+//**************************************************************************//
 
 int* depth_detect::DetectFreeSpace::trans2grid(float x, float y){
   x = x*200;
@@ -68,34 +73,53 @@ int* depth_detect::DetectFreeSpace::trans2grid(float x, float y){
 
 }
 
-
+//***************************************************************************//
 
 void depth_detect::DetectFreeSpace::updateStaticGrid(){
 
 }
 
-
-void depth_detect::DetectFreeSpace::updateConfidenceGrid(vector<int>index_arr,float prior_prob){
+//*************************************************************************//
+void depth_detect::DetectFreeSpace::updateConfidenceGrid(std::vector<int>index_arr,std::vector<uint8_t> prior_arr){
 
   for(int i = 0; i<map_data_.size();i++){
-
-    map_data_[i] = updateProb(map_data_i,P_MISS)
-
+    map_data_[i] = updateProb(map_data_[i],P_MISS);
   }
 
+  for(int i = 0; i<index_arr.size();i++){
+    map_data_[index_arr[i]] = updateProb(prior_arr[i],P_HIT);
+    }
+
 }
 
-void depth_detect::DetectFreeSpace::updateProb(){
+//************************************************************************///
 
+uint8_t depth_detect::DetectFreeSpace::updateProb(uint8_t p_prior, uint8_t p_curr ){
+
+  float prior_prob = (float)(p_prior/100);
+  float curr_prob = (float)(p_curr/100);
+
+  float res = (prior_prob/(1-prior_prob)) * (curr_prob/(1-curr_prob));
+  res = res/1+res;
+  res = res*100;
+
+  return (uint8_t)res;
 }
 
-
+//*****************************************************************************///
 void depth_detect::DetectFreeSpace::publishGrids(){
 
+  // cv::Mat dynamic_grid = cv::Mat(1000,1000,CV_8UC1,map_data_);
+  int map_height = 1000;
+  int map_width = 1000;
+  cv::Mat dynamic_grid = cv::Mat(1000, 1000, CV_8UC1, map_data_.data());
+  sensor_msgs::ImagePtr dynamic_grid_image;
+  dynamic_grid_image = cv_bridge::CvImage(std_msgs::Header(), "bgr8", dynamic_grid).toImageMsg();
+  image_pub_.publish(dynamic_grid_image);
+
 }
 
-
-
+///****************************************************************************////
 
 int main(int argc, char** argv) {
 

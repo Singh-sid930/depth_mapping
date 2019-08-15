@@ -10,8 +10,19 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <math.h>
 // #include <nav_msg/OccupancyGrid.h>
-// #include <Eigen/Dense>
+#include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <image_transport/image_transport.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
+
+#include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/CompressedImage.h>
+#include <image_transport/image_transport.h>
+
 namespace depth_detect{
 class DetectFreeSpace{
 public:
@@ -26,8 +37,8 @@ public:
   }
 private:
   #define ANGLE_REDUCTION 0.02
-  const float P_HIT  =  0.6
-  const float P_MISS = 0.3
+  const uint8_t P_HIT  =  60;
+  const uint8_t P_MISS = 30;
   Eigen::MatrixXi dynamic_grid_{Eigen::MatrixXi::Zero(1000,1000)};
   Eigen::MatrixXi static_grid_;
   sensor_msgs::PointCloud out_pointcloud_;
@@ -38,6 +49,7 @@ private:
   float cloud_height_;
   ros::Subscriber cloud_sub_;
   ros::Publisher cloud_pub_;
+  image_transport::Publisher image_pub_;
   std::map<float,float> scan_map_;
   void cloud_cb(const sensor_msgs::PointCloud2::ConstPtr& msg){
         // ROS_INFO("in the callback");
@@ -49,8 +61,9 @@ private:
   int* trans2grid(float x, float y);
   void updateGrid(float angle_min, float angle_max);
   void updateStaticGrid();
-  void updateConfidenceGrid(int index,float prior_prob);
+  void updateConfidenceGrid(std::vector<int>index_arr,std::vector<uint8_t> prior_arr);
   void publishGrids();
+  uint8_t updateProb(uint8_t p_prior, uint8_t p_curr);
 
 };
 }
