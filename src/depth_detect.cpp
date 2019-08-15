@@ -1,9 +1,7 @@
 #include "depth_mapping/depth_detect.h"
 
-// #include <math.h>
 
-
-//****************************************************************************//
+//******************************* convert 3d point cloud to 2d point scan *********************************************//
 void depth_detect::DetectFreeSpace::conv2dScan(){
 
   for (auto i:out_pointcloud_.points){
@@ -15,7 +13,7 @@ void depth_detect::DetectFreeSpace::conv2dScan(){
       float z = i.z;
       float theta = atan2(x,z);
       float range = hypotf(x,z);
-      scan_map_[theta] = range;
+      scan_map_[theta] = range; // map the angles and ranges to a sorted ordered map angle:range
     }
   }
 
@@ -24,13 +22,13 @@ void depth_detect::DetectFreeSpace::conv2dScan(){
   auto it_l = scan_map_.end()--;
   float angle_min = it_s->first;
   float angle_max = it_l->first;
-  angle_min = angle_min + ANGLE_REDUCTION;
-  angle_max = angle_max - ANGLE_REDUCTION;
+  angle_min = angle_min + ANGLE_REDUCTION; //reduce the angle ranges to make sure we get rid of unnecessary noise close to the camera
+  angle_max = angle_max - ANGLE_REDUCTION; // especially necessary when we are dealing with point cloud from stereo cameras.
   updateGrid(angle_min,angle_max);
 
 }
 
-//***************************************************************************//
+//****************************   update the eigen grid with 0s and 1s for empty and filled spaces and go on to update the confidence grid ******************************//
 
 void depth_detect::DetectFreeSpace::updateGrid(float angle_min, float angle_max){
 std::vector<int> index_arr;
@@ -43,19 +41,19 @@ while(it != it_upper){
   float x = it->second * cos(it->first);
   float y = it->second * sin(it->first);
   int* coordinates = trans2grid(x,y);
-  uint8_t prior_prob = dynamic_grid_(coordinates[0],coordinates[1]);
-  prior_arr.push_back(prior_prob);
   dynamic_grid_(coordinates[0],coordinates[1]) = 1;
   int index = coordinates[0] + coordinates[1]*1000;
-  index_arr.push_back(index);
+  index_arr.push_back(index); // array for indexes which are hits.
+  uint8_t prior_prob = map_data_[index];
+  prior_arr.push_back(prior_prob);// array for probability of indexes(grids) which are hits
   it++;
 }
 
-updateConfidenceGrid(index_arr,prior_arr);
+updateConfidenceGrid(index_arr,prior_arr); // update the confidence grid based on the index array and prior probability array
 
 }
 
-//**************************************************************************//
+//********************************* convert camera coordinates to grid coordinates. *****************************************//
 
 int* depth_detect::DetectFreeSpace::trans2grid(float x, float y){
   x = x*200;
@@ -73,13 +71,13 @@ int* depth_detect::DetectFreeSpace::trans2grid(float x, float y){
 
 }
 
-//***************************************************************************//
+//***********************************  convert map to a static grid  ****************************************//
 
 void depth_detect::DetectFreeSpace::updateStaticGrid(){
 
 }
 
-//*************************************************************************//
+//***********************************  update the dynamic confidence grid, call the update probability function to update probabilities of the grid **************************************//
 void depth_detect::DetectFreeSpace::updateConfidenceGrid(std::vector<int>index_arr,std::vector<uint8_t> prior_arr){
 
   for(int i = 0; i<map_data_.size();i++){
@@ -92,7 +90,7 @@ void depth_detect::DetectFreeSpace::updateConfidenceGrid(std::vector<int>index_a
 
 }
 
-//************************************************************************///
+//********************************** return probability based on the previous probability and current probability (hit or miss)**************************************///
 
 uint8_t depth_detect::DetectFreeSpace::updateProb(uint8_t p_prior, uint8_t p_curr ){
 
@@ -106,20 +104,17 @@ uint8_t depth_detect::DetectFreeSpace::updateProb(uint8_t p_prior, uint8_t p_cur
   return (uint8_t)res;
 }
 
-//*****************************************************************************///
+//************************************ Publish the grids after converting them into cv images *****************************************///
 void depth_detect::DetectFreeSpace::publishGrids(){
 
-  // cv::Mat dynamic_grid = cv::Mat(1000,1000,CV_8UC1,map_data_);
-  int map_height = 1000;
-  int map_width = 1000;
   cv::Mat dynamic_grid = cv::Mat(1000, 1000, CV_8UC1, map_data_.data());
-  sensor_msgs::ImagePtr dynamic_grid_image;
-  dynamic_grid_image = cv_bridge::CvImage(std_msgs::Header(), "bgr8", dynamic_grid).toImageMsg();
-  image_pub_.publish(dynamic_grid_image);
+  // sensor_msgs::ImagePtr dynamic_grid_image;
+  // dynamic_grid_image = cv_bridge::CvImage(std_msgs::Header(), "bgr8", dynamic_grid).toImageMsg();
+  // image_pub_.publish(dynamic_grid_image);
 
 }
 
-///****************************************************************************////
+///*************************************** driver function *************************************////
 
 int main(int argc, char** argv) {
 
