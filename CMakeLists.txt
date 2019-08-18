@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 	image_transport
 	tf
 	cv_bridge
+	nav_msgs
 )
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV)

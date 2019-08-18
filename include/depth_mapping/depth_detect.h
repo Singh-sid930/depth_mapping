@@ -30,10 +30,10 @@
 #include <sensor_msgs/CompressedImage.h>
 
 
-
+#include <nav_msgs/OccupancyGrid.h>
 
 //Global constants
-#define ANGLE_REDUCTION 0.02
+#define ANGLE_REDUCTION 0.2
 
 
 
@@ -46,7 +46,11 @@ public:
                                                                                         cloud_sub_(pnh_.subscribe("/white_lines",1000,&depth_detect::DetectFreeSpace::cloud_cb,this)),
                                                                                         cloud_width_(cloud_width),
                                                                                         cloud_height_(cloud_height),
-                                                                                        cloud_pub_(pnh_.advertise<sensor_msgs::PointCloud>("/converted_cloud",1000)){
+                                                                                        cloud_pub_(pnh_.advertise<sensor_msgs::PointCloud>("/converted_cloud",1000)),
+                                                                                        grid_pub_(pnh_.advertise<nav_msgs::OccupancyGrid>("/confidence_grid",1000)),
+                                                                                        it_(pnh_),
+                                                                                        image_pub_(it_.advertise("out_image_base_topic", 1)){
+
 
       ROS_INFO("the cloud subscriber is set up with cloud height and cloud width");
 
@@ -60,14 +64,17 @@ private:
   Eigen::MatrixXi dynamic_grid_{Eigen::MatrixXi::Zero(1000,1000)};
   Eigen::MatrixXi static_grid_;
   std::map<float,float> scan_map_;
-  std::vector<uint8_t> map_data_{std::vector<uint8_t>(1000000,50)}; //initialize prior with 0.5 or 50
+  std::vector<int8_t> map_data_{std::vector<int8_t>(1000000,50)}; //initialize prior with 0.5 or 50
 
   //ros node handles and publishers
   ros::NodeHandle pnh_;
   sensor_msgs::PointCloud out_pointcloud_;
   ros::Subscriber cloud_sub_;
   ros::Publisher cloud_pub_;
+  ros::Publisher grid_pub_;
+  image_transport::ImageTransport it_;
   image_transport::Publisher image_pub_;
+  nav_msgs::OccupancyGrid confidence_map_;
 
   //useful variables
   float cloud_width_;
