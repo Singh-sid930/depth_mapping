@@ -59,12 +59,15 @@ private:
   //Probability for hitting or missing a cell
   const uint8_t P_HIT  =  60;
   const uint8_t P_MISS = 30;
+  const int height = 100;
+  const int width = 100;
+  const int resolution = 5;
 
   //map grids and map data
-  Eigen::MatrixXi dynamic_grid_{Eigen::MatrixXi::Zero(1000,1000)};
+  Eigen::MatrixXi dynamic_grid_{Eigen::MatrixXi::Zero(height,width)};
   Eigen::MatrixXi static_grid_;
   std::map<float,float> scan_map_;
-  std::vector<int8_t> map_data_{std::vector<int8_t>(1000000,50)}; //initialize prior with 0.5 or 50
+  std::vector<int8_t> map_data_{std::vector<int8_t>(height*width,50)}; //initialize prior with 0.5 or 50
 
   //ros node handles and publishers
   ros::NodeHandle pnh_;
@@ -84,6 +87,10 @@ private:
   void cloud_cb(const sensor_msgs::PointCloud2::ConstPtr& msg){
         sensor_msgs::convertPointCloud2ToPointCloud(*msg, out_pointcloud_);
         conv2dScan();
+        scan_map_.clear();
+        // out_pointcloud_.header.clear();
+        out_pointcloud_.points.clear();
+        out_pointcloud_.channels.clear();
   }
 
   //functions implemented

@@ -13,22 +13,11 @@ void depth_detect::DetectFreeSpace::conv2dScan(){
       float z = i.z;
       float theta = atan2(x,z);
       float range = hypotf(x,z);
-      // ROS_INFO("the angle is = %f", theta);
-      // ROS_INFO("the range is = %f", range);
-      // scan_map_[theta] = range;
       scan_map_.insert({theta,range}); // map the angles and ranges to a sorted ordered map angle:range
     }
   }
-  // ROS_INFO("the pair is = %f:%f",0.630575,scan_map_[0.630575]);
-//     for(auto it = scan_map_.cbegin(); it != scan_map_.cend(); ++it)
-// {
-//   if(it->first>0.0){
-//     ROS_INFO("the angle is = %f", it->first);
-//     ROS_INFO("the range is = %f", it->second);
-//   }
-// }
 
-  // std::cout<<"the size of the map is= " <<scan_map_.size()<<"\n";
+  // std::cout<<"the size of the map is= " <<scan_map_.size()<<"";
   auto it_s = scan_map_.begin()++;
   auto it_l = scan_map_.end()--;
   it_l--;
@@ -44,6 +33,7 @@ void depth_detect::DetectFreeSpace::conv2dScan(){
 
   updateGrid(angle_min,angle_max);
 
+
 }
 
 //****************************   update the eigen grid with 0s and 1s for empty and filled spaces and go on to update the confidence grid ******************************//
@@ -51,50 +41,39 @@ void depth_detect::DetectFreeSpace::conv2dScan(){
 void depth_detect::DetectFreeSpace::updateGrid(float angle_min, float angle_max){
 
 /// ***************** reinitialize the eigen grid with 0s ****************////
-
+dynamic_grid_ = Eigen::MatrixXi::Zero(height,width);
 std::vector<int> index_arr;
 std::vector<uint8_t> prior_arr;
 auto it_upper = scan_map_.lower_bound(angle_max);
 auto it_lower = scan_map_.upper_bound(angle_min);
-// ROS_INFO("the new lower angle is = %f", it_lower->first);
-// ROS_INFO("the new upper angle is = %f", it_upper->first);
-// ROS_INFO("******************************************************************************");
 std::map<float,float>::const_iterator it = it_lower;
 while(it != it_upper){
   float x = it->second * cos(it->first);
   float y = it->second * sin(it->first);
   int* coordinates = trans2grid(x,y);
-  // ROS_INFO("the coordinates are: %f,%f", x,y);
-  // ROS_INFO("the grid coordinates are: %d,%d", coordinates[0],coordinates[1]);
   dynamic_grid_(coordinates[0],coordinates[1]) = 1;
-  int index = coordinates[0] + coordinates[1]*1000;
+  int index = coordinates[0] + coordinates[1]*width;
   index_arr.push_back(index); // array for indexes which are hits.
   uint8_t prior_prob = map_data_[index];
   prior_arr.push_back(prior_prob);// array for probability of indexes(grids) which are hits
   it++;
 }
-// for(auto it:prior_arr){
-//   ROS_INFO("prior array element is %d",it);
-// }
-// // for(auto it:index_arr){
-// //   ROS_INFO("prior index element is %d",it);
-// // }
-// //
 updateConfidenceGrid(index_arr,prior_arr); // update the confidence grid based on the index array and prior probability array
-
+// index_arr.clear();
+// prior_arr.clear();
 }
 
 //********************************* convert camera coordinates to grid coordinates. *****************************************//
 
 int* depth_detect::DetectFreeSpace::trans2grid(float x, float y){
-  x = x*200;
-  y = y*200;
+  x = x*(height/resolution);
+  y = y*(width/resolution);
   x = round(x);
   y = round(y);
-  y = y+500;
-  y = y>999?999:y;
+  y = y+(width/2);
+  y = y>(width-1)?(width-1):y;
   y = y<0?0:y;
-  x = x>999?999:x;
+  x = x>(height-1)?(height-1):x;
   static int coord[2];
   coord[0] = x;
   coord[1] = y;
@@ -110,19 +89,36 @@ void depth_detect::DetectFreeSpace::updateStaticGrid(){
 
 //***********************************  update the dynamic confidence grid, call the update probability function to update probabilities of the grid **************************************//
 void depth_detect::DetectFreeSpace::updateConfidenceGrid(std::vector<int>index_arr,std::vector<uint8_t> prior_arr){
+  // ROS_INFO("the size of array with hits is : %lu", prior_arr.size());
   uint8_t p_hit = 60;
   uint8_t p_miss = 20;
   for(int i = 0; i<map_data_.size();i++){
-    map_data_[i] = updateProb(map_data_[i],p_miss);
+    uint8_t val = updateProb(map_data_[i],p_miss);
+    if(val<50){
+    map_data_[i] = 0;
+    }
+    else{
+    map_data_[i] = 99;
+    }
+  // map_data_[i] = val;
   }
 // ROS_INFO("************************");
   for(int i = 0; i<index_arr.size();i++){
-    // ROS_INFO("sending prior probability of %d at index %d", prior_arr[i], index_arr[i]);
 
-    map_data_[index_arr[i]] = updateProb(prior_arr[i],p_hit);
-    // ROS_INFO("updated index %d with probability %d",index_arr[i],map_data_[index_arr[i]]);
+    uint8_t val = updateProb(prior_arr[i],p_hit);
+    if(val>50){
+      map_data_[index_arr[i]] = 99;
     }
-// ROS_INFO("***********************");
+    else{
+      map_data_[index_arr[i]] = 0;
+    }
+    // map_data_[index_arr[i]] = val;
+    // ROS_INFO("**************************************");
+    // if(val>50){
+    // ROS_INFO("updated probability at index : %d is %d",index_arr[i],map_data_[index_arr[i]]);
+    // }
+    // ROS_INFO("***************************************");
+    }
 publishGrids();
 
 }
@@ -143,6 +139,20 @@ uint8_t depth_detect::DetectFreeSpace::updateProb(uint8_t p_prior, uint8_t p_cur
 
   res = res==0?1:res;
   res = res==100?99:res;
+//*******************************************************************************************//
+  // uint8_t res = 0;
+  // if(p_curr>50){
+  //   res = p_prior+1;
+  //   if(res>100){
+  //     res = 100;
+  //   }
+  // }
+  // else{
+  //   res = p_prior-1;
+  //   if(res>0){
+  //     res = 0;
+  //   }
+  // }
 
   return (uint8_t)res;
 }
@@ -150,10 +160,16 @@ uint8_t depth_detect::DetectFreeSpace::updateProb(uint8_t p_prior, uint8_t p_cur
 //************************************ Publish the grids after converting them into cv images *****************************************///
 void depth_detect::DetectFreeSpace::publishGrids(){
 
-  confidence_map_.info.resolution = 1.0;         // float32
-  confidence_map_.info.width      = 1000;           // uint32
-  confidence_map_.info.height     = 2;           // uint3
+  confidence_map_.info.resolution = 0.1;         // float32
+  confidence_map_.info.width      = width;           // uint32
+  confidence_map_.info.height     = height;           // uint32
   confidence_map_.data = map_data_;
+
+  // for(auto i:map_data_){
+  //   if(i>50){
+  //     ROS_INFO("the value is %d", i);
+  //   }
+  // }
 
   grid_pub_.publish(confidence_map_);
   // cv::Mat dynamic_grid = cv::Mat(1000, 1000, CV_8UC1, map_data_.data());
