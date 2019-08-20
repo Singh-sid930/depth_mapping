@@ -93,44 +93,44 @@ void depth_detect::DetectFreeSpace::updateStaticGrid(){
 void depth_detect::DetectFreeSpace::updateConfidenceGrid(std::vector<int>index_arr,std::vector<int8_t> prior_arr){
   int8_t p_hit = 60;
   int8_t p_miss = 30;
-  for(int i = 0; i<map_data_.size();i++){
-    // int8_t val = 0;
-    int8_t val = updateProb(map_data_[i],p_miss);
-    // if(val<50){
-    // map_data_[i] = 0;
-    // }
-    // else{
-    // map_data_[i] = 99;
-    // }
-  map_data_[i] = val;
-  }
-  for(int i = 0; i<index_arr.size();i++){
-    // int8_t val = 100;
-    int8_t val = updateProb(prior_arr[i],p_hit);
-    // if(val>50){
-    //   map_data_[index_arr[i]] = 99;
-    // }
-    // else{
-    //   map_data_[index_arr[i]] = 0;
-    // }
-    map_data_[index_arr[i]] = val;
-    }
-  //***********************************************************************////
   // for(int i = 0; i<map_data_.size();i++){
   //   // int8_t val = 0;
-  //   if (std::find(index_arr.begin(), index_arr.end(),i)!=index_arr.end()){
-  //     int8_t val = updateProb(map_data_[i],p_hit);
-  //     map_data_[i] = val;
-  //   }
-  //   else{
-  //     int8_t val = updateProb(map_data_[i],p_miss);
-  //     if(val < 10){
-  //       val = 20;
-  //     }
-  //     map_data_[i] = val;
-  //   }
-  //
+  //   int8_t val = updateProb(map_data_[i],p_miss);
+  //   // if(val<50){
+  //   // map_data_[i] = 0;
+  //   // }
+  //   // else{
+  //   // map_data_[i] = 99;
+  //   // }
+  // map_data_[i] = val;
   // }
+  // for(int i = 0; i<index_arr.size();i++){
+  //   // int8_t val = 100;
+  //   int8_t val = updateProb(prior_arr[i],p_hit);
+  //   // if(val>50){
+  //   //   map_data_[index_arr[i]] = 99;
+  //   // }
+  //   // else{
+  //   //   map_data_[index_arr[i]] = 0;
+  //   // }
+  //   map_data_[index_arr[i]] = val;
+  //   }
+  //***********************************************************************////
+  for(int i = 0; i<map_data_.size();i++){
+    // int8_t val = 0;
+    if (std::find(index_arr.begin(), index_arr.end(),i)!=index_arr.end()){
+      int8_t val = updateProb(map_data_[i],p_hit);
+      map_data_[i] = val;
+    }
+    else{
+      int8_t val = updateProb(map_data_[i],p_miss);
+      if(val < 10){
+        val = 20;
+      }
+      map_data_[i] = val;
+    }
+
+  }
 publishGrids();
 
 }
