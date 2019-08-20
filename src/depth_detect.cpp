@@ -115,6 +115,22 @@ void depth_detect::DetectFreeSpace::updateConfidenceGrid(std::vector<int>index_a
     // }
     map_data_[index_arr[i]] = val;
     }
+  //***********************************************************************////
+  // for(int i = 0; i<map_data_.size();i++){
+  //   // int8_t val = 0;
+  //   if (std::find(index_arr.begin(), index_arr.end(),i)!=index_arr.end()){
+  //     int8_t val = updateProb(map_data_[i],p_hit);
+  //     map_data_[i] = val;
+  //   }
+  //   else{
+  //     int8_t val = updateProb(map_data_[i],p_miss);
+  //     if(val < 10){
+  //       val = 20;
+  //     }
+  //     map_data_[i] = val;
+  //   }
+  //
+  // }
 publishGrids();
 
 }
@@ -122,6 +138,9 @@ publishGrids();
 //********************************** return probability based on the previous probability and current probability (hit or miss)**************************************///
 
 int8_t depth_detect::DetectFreeSpace::updateProb(int8_t p_prior, int8_t p_curr ){
+  // if(p_curr<50){
+  //   ROS_INFO("the prior probability of miss are: %d", p_prior);
+  // }
   float prior_prob = static_cast<float>(p_prior);
   prior_prob = prior_prob/100;
   float curr_prob = static_cast<float>(p_curr);
@@ -132,7 +151,7 @@ int8_t depth_detect::DetectFreeSpace::updateProb(int8_t p_prior, int8_t p_curr )
 
   res = res<=0?1:res;
   res = res>=100?99:res;
-//*******************************************************************************************//
+// //*******************************************************************************************//
 //   int8_t res = 0;
 //   if(p_curr>50){
 //     res = p_prior+1;

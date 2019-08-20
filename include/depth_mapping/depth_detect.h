@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <algorithm>
 //eigen headers
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
