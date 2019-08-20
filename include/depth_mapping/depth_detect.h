@@ -43,11 +43,11 @@ namespace depth_detect{
 class DetectFreeSpace{
 public:
   DetectFreeSpace(const ros::NodeHandle& pnh, const float cloud_width, const float cloud_height):pnh_(pnh),
-                                                                                        cloud_sub_(pnh_.subscribe("/white_lines",1000,&depth_detect::DetectFreeSpace::cloud_cb,this)),
+                                                                                        cloud_sub_(pnh_.subscribe("/white_lines",1,&depth_detect::DetectFreeSpace::cloud_cb,this)),
                                                                                         cloud_width_(cloud_width),
                                                                                         cloud_height_(cloud_height),
-                                                                                        cloud_pub_(pnh_.advertise<sensor_msgs::PointCloud>("/converted_cloud",1000)),
-                                                                                        grid_pub_(pnh_.advertise<nav_msgs::OccupancyGrid>("/confidence_grid",1000)),
+                                                                                        cloud_pub_(pnh_.advertise<sensor_msgs::PointCloud>("/converted_cloud",1)),
+                                                                                        grid_pub_(pnh_.advertise<nav_msgs::OccupancyGrid>("/confidence_grid",1)),
                                                                                         it_(pnh_),
                                                                                         image_pub_(it_.advertise("out_image_base_topic", 1)){
 
@@ -57,8 +57,8 @@ public:
   }
 private:
   //Probability for hitting or missing a cell
-  const uint8_t P_HIT  =  60;
-  const uint8_t P_MISS = 30;
+  const int8_t P_HIT  =  60;
+  const int8_t P_MISS = 30;
   const int height = 100;
   const int width = 100;
   const int resolution = 5;
@@ -98,9 +98,9 @@ private:
   int* trans2grid(float x, float y); //convert world coordinates to grid coordinates
   void updateGrid(float angle_min, float angle_max); //update dynamic grid with obstacles and free spaces
   void updateStaticGrid();// update static grid from the map if it exists
-  void updateConfidenceGrid(std::vector<int>index_arr,std::vector<uint8_t> prior_arr); //update confidence grid as an image
+  void updateConfidenceGrid(std::vector<int>index_arr,std::vector<int8_t> prior_arr); //update confidence grid as an image
   void publishGrids();// publish the grids as cv images
-  uint8_t updateProb(uint8_t p_prior, uint8_t p_curr); //update the probility
+  int8_t updateProb(int8_t p_prior, int8_t p_curr); //update the probility
 
 };
 }
