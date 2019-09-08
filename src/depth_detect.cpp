@@ -25,10 +25,16 @@ void depth_detect::DetectFreeSpace::conv2dScan(){
   angle_min = angle_min + ANGLE_REDUCTION; //reduce the angle ranges to make sure we get rid of unnecessary noise close to the camera
   angle_max = angle_max - ANGLE_REDUCTION; // especially necessary when we are dealing with point cloud from stereo cameras.
 
+  // PublishScan(angle_min,angle_max);
+
   updateGrid(angle_min,angle_max);
 
 
 }
+
+// void depth_detect::DetectFreeSpace::PublishScan(float angle_min, float angle_max){
+//
+// }
 
 //****************************   update the eigen grid with 0s and 1s for empty and filled spaces and go on to update the confidence grid ******************************//
 
@@ -52,14 +58,6 @@ while(it != it_upper){
   prior_arr.push_back(prior_prob);// array for probability of indexes(grids) which are hits
   it++;
 }
-// ROS_INFO("*******************************************");
-// for (int i = 0;i<width;i++){
-//   for (int j = 0;j<height;j++){
-//     std::cout<<dynamic_grid_(i,j);
-//   }
-//   std::cout<<"\n";
-// }
-// ROS_INFO("*******************************************");
 updateConfidenceGrid(index_arr,prior_arr); // update the confidence grid based on the index array and prior probability array
 index_arr.clear();
 prior_arr.clear();
@@ -138,9 +136,6 @@ publishGrids();
 //********************************** return probability based on the previous probability and current probability (hit or miss)**************************************///
 
 int8_t depth_detect::DetectFreeSpace::updateProb(int8_t p_prior, int8_t p_curr ){
-  // if(p_curr<50){
-  //   ROS_INFO("the prior probability of miss are: %d", p_prior);
-  // }
   float prior_prob = static_cast<float>(p_prior);
   prior_prob = prior_prob/100;
   float curr_prob = static_cast<float>(p_curr);
@@ -151,43 +146,18 @@ int8_t depth_detect::DetectFreeSpace::updateProb(int8_t p_prior, int8_t p_curr )
 
   res = res<=0?1:res;
   res = res>=100?99:res;
-// //*******************************************************************************************//
-//   int8_t res = 0;
-//   if(p_curr>50){
-//     res = p_prior+1;
-//     if(res>100){
-//       res = 100;
-//     }
-//   }
-//   else{
-//     res = p_prior-1;
-//     if(res>0){
-//       res = 0;
-//     }
-//   }
-//
-//**********************************************************************************************//
   return (int8_t)res;
 }
 
 //************************************ Publish the grids after converting them into cv images *****************************************///
 void depth_detect::DetectFreeSpace::publishGrids(){
 
-
-  // ROS_INFO("*******************************************");
-  // for (int i = 0;i<width;i++){
-  //   for (int j = 0;j<height;j++){
-  //     std::cout<<static_cast<int>(map_data_[i+(j*width)]);
-  //   }
-  //   std::cout<<"\n";
-  // }
-  // ROS_INFO("*******************************************");
   confidence_map_.info.resolution = 0.1;         // float32
   confidence_map_.info.width      = width;           // uint32
   confidence_map_.info.height     = height;           // uint32
   confidence_map_.data = map_data_;
   grid_pub_.publish(confidence_map_);
-  // cv::Mat dynamic_grid = cv::Mat(1000, 1000, CV_8UC1, map_data_.data());
+  // cv::Mat dynamic_grid = cv::Mat(100, 100, CV_8UC1, map_data_.data());
   // sensor_msgs::ImagePtr dynamic_grid_image;
   // dynamic_grid_image = cv_bridge::CvImage(std_msgs::Header(), "bgr8", dynamic_grid).toImageMsg();
   // image_pub_.publish(dynamic_grid_image);

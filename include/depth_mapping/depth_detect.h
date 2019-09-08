@@ -34,7 +34,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 
 //Global constants
-#define ANGLE_REDUCTION 0.2
+#define ANGLE_REDUCTION 0.0
 
 
 
