@@ -22,7 +22,7 @@ struct point{
   point(): x(0),y(0),z(0){};
   point(int x, int y, int z):x(x),y(y),z(z){};
 }
-
+namespace depth_detct{
 class SemanticDepth{
 public:
   SemanticDepth(ros::NodeHandle& pnh):pnh_(pnh),
@@ -55,9 +55,11 @@ private:
   void depthCb(const sensor_msgs::ImageConstPtr& depth_msg,
           const sensor_msgs::ImageConstPtr& segment_msg,
 	        const sensor_msgs::CameraInfoConstPtr& info_msg,
-          const std_msgs:Float64::ConstPtr& objects){
+          const std_msgs:Float64::ConstPtr& objects)
+          {
           freeSpaceCoord(depth_msg,segment_msg,info_msg);
           objectCoord(depth_msg,objects,info_msg);
+        }
 
   int* freeSpaceCoord(const sensor_msgs::ImageConstPtr& depth_msg,
                 const sensor_msgs::ImageConstPtr& segment_msg,
@@ -77,3 +79,4 @@ private:
 
 
 };
+}
