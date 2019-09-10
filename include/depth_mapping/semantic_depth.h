@@ -14,6 +14,7 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <boost/bind.hpp>
 #include "ros/ros.h"
+#include "image_geometry/pinhole_camera_model.h"
 
 struct point{
   int x;
@@ -50,23 +51,27 @@ private:
   nav_msgs::OccupancyGrid freespace_confidence_map_;
   std::vector<int8_t> free_space_data;
   std::vector<int8_t> object_detect_data;
+  std::vector<point> free_space_coord;
+  std::vector<point> object_space_coord;
+
+  image_geometry::PinholeCameraModel cam_model_;
 
 
   void depthCb(const sensor_msgs::ImageConstPtr& depth_msg,
           const sensor_msgs::ImageConstPtr& segment_msg,
 	        const sensor_msgs::CameraInfoConstPtr& info_msg,
-          const std_msgs:Float64::ConstPtr& objects){
-          freeSpaceCoord(depth_msg,segment_msg,info_msg);
-          objectCoord(depth_msg,objects,info_msg);
+          const std_msgs:Float64::ConstPtr& objects)
+          {
+          cam_model_.fromCameraInfo(info_msg)
+          freeSpaceCoord(depth_msg,segment_msg);
+          objectCoord(depth_msg,objects);
+        }
 
   int* freeSpaceCoord(const sensor_msgs::ImageConstPtr& depth_msg,
-                const sensor_msgs::ImageConstPtr& segment_msg,
-                const sensor_msgs::CameraInfoConstPtr& info_msg,
-                const std_msgs:Float64::ConstPtr& objects);
+                const sensor_msgs::ImageConstPtr& segment_msg);
 
   int* objectCoord(const sensor_msgs::ImageConstPtr& depth_msg,
-                const std_msgs:Float64::ConstPtr& objects,
-                const sensor_msgs::CameraInfoConstPtr& info_msg);
+                const std_msgs:Float64::ConstPtr& objects);
 
   void updateFreeSpaceGrid(std::vector<point> *free_space_coord);
   void updateObjectGrid(std::vector<point> *object_space_coord);
