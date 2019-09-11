@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 	tf
 	cv_bridge
 	nav_msgs
+  message_generation
 )
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV)
@@ -54,11 +55,11 @@ find_package(OpenCV)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   scan_range.msg
+   
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -75,10 +76,10 @@ find_package(OpenCV)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs#   std_msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   sensor_msgs   std_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -112,7 +113,7 @@ find_package(OpenCV)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES depth_mapping
-  #CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs
+  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -143,6 +144,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
  add_executable(grid_builder src/depth_detect.cpp)
+ add_executable(lidar_processing_node src/lidar_processing.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,6 +159,9 @@ include_directories(
 ## Specify libraries to link a library or executable target against
 
 target_link_libraries(grid_builder
+   ${catkin_LIBRARIES}
+ )
+target_link_libraries(lidar_processing_node
    ${catkin_LIBRARIES}
  )
 

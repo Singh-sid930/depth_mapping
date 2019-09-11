@@ -23,7 +23,7 @@ struct point{
   point(): x(0),y(0),z(0){};
   point(int x, int y, int z):x(x),y(y),z(z){};
 }
-
+namespace depth_detct{
 class SemanticDepth{
 public:
   SemanticDepth(ros::NodeHandle& pnh):pnh_(pnh),
@@ -37,6 +37,11 @@ public:
     ROS_INFO("semantic depth map creator is set up. Will start publishing the grid now ..............")
   }
 private:
+  const int8_t P_HIT  =  60;
+  const int8_t P_MISS = 30;
+  const int height = 100;
+  const int width = 100;
+  const int resolution = 5
   ros::NodeHandle pnh_;
   ros::Subscriber object_sub;
   message_filters::Subscriber<sensor_msgs::Image> image_sub;
@@ -49,10 +54,11 @@ private:
   // image_transport::CameraSubscriber image_sub_;
   nav_msgs::OccupancyGrid detection_confidence_map_;
   nav_msgs::OccupancyGrid freespace_confidence_map_;
-  std::vector<int8_t> free_space_data;
-  std::vector<int8_t> object_detect_data;
-  std::vector<point> free_space_coord;
-  std::vector<point> object_space_coord;
+  std::vector<int8_t> free_space_data_{std::vector<int8_t>(height*width,100)};
+  std::vector<int8_t> object_detect_data {std::vector<int8_t>(height*width,50)};
+
+  // std::vector<point> free_space_coord;
+  // std::vector<point> object_space_coord;
 
   image_geometry::PinholeCameraModel cam_model_;
 
@@ -79,6 +85,7 @@ private:
   void updateProb(int8_t p_prior, int8_t p_curr);
   void buildGrids();
   void publishGrids();
-
+  int8_t updateProb(int8_t p_prior, int8_t p_curr );
 
 };
+}
