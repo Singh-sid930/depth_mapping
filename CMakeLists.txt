@@ -58,7 +58,8 @@ find_package(OpenCV)
  add_message_files(
    FILES
    scan_range.msg
-   
+   object_detect.msg
+
  )
 
 ## Generate services in the 'srv' folder
@@ -144,6 +145,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
  add_executable(grid_builder src/depth_detect.cpp)
+ add_executable(semantic_grid_builder src/semantic_depth.cpp)
  add_executable(lidar_processing_node src/lidar_processing.cpp)
 
 ## Rename C++ executable without prefix
@@ -162,6 +164,10 @@ target_link_libraries(grid_builder
    ${catkin_LIBRARIES}
  )
 target_link_libraries(lidar_processing_node
+   ${catkin_LIBRARIES}
+ )
+
+target_link_libraries(semantic_grid_builder
    ${catkin_LIBRARIES}
  )
 
