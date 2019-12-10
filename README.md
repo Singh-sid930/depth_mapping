@@ -1,4 +1,4 @@
-# YOLO version-1 implemented in pytorch 
+# Semantic and PRobabilistic mapping fom stereo cameras for active planning and control. 
 
 Mapping framework for vision. Using only camera based mapping by converting into point clouds using depth maps. 
 Currently tested on Realsense cameras to create probablistic occupancy maps. The launch files can be modified to use the camera of choice and the rostopics of choice. 
