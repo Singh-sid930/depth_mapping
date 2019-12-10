@@ -1,157 +1,228 @@
 #include "depth_mapping/semantic_depth.h"
 
+double depth_detect::SemanticDepth::angleBetweenRays(const cv::Point3d& ray1, const cv::Point3d& ray2){
 
-void SemanticDepth::freeSpaceCoord(const sensor_msgs::ImageConstPtr& depth_msg,
-              const sensor_msgs::ImageConstPtr& segment_msg,image_geometry::PinholeCameraModel& cam_model){
-                // int n = depth_msg.data.size()<segment_msg.data.size()?depth_msg.data.size():segment_msg.data.size();
-                // int height = depth_msg.height;
-                // int width = depth_msg.width;
-                // for (int i = 0; i<n; i++){
-                //   if(segment_msg.data[i]) ==100{
-                //     Point segment_coord;
-                //     int pix_x = i/height;
-                //     int pix_y = i%width;
-                //     ///// *********************** Check here ************************ ////
-                //     cv::Point2d raw_pixel(pix_x, pix_y);
-                //     cv::Point2d rect_pixel= cam_model_.rectifyPoint(raw_pixel);
-                //     cv::Point3d ray = cam_model_.projectPixelTo3dRay(rect_pixel);
-                //     segment_coord.x = ray.x;
-                //     segment_coord.y = ray.y;
-                //     segment_coord.z = depth_msg.data[i];
-                //     std::vector<point> free_space_coord;
-                //     free_space_coord.push_back(segment_coord);
-                //   }
-                // }
-                // updateFreeSpaceGrid(free_space_coord);
-                // //create point vector of points of free space
-              }
+  double dot_product = ray1.x*ray2.x + ray1.y*ray2.y + ray1.z*ray2.z;
+  double magnitude1 = magnitudeofRay(ray1);
+  double magnitude2 = magnitudeofRay(ray2);
+  double theta  = acos(dot_product / (magnitude1 * magnitude2));
+  return theta;
 
-void SemanticDepth::objectCoord(const sensor_msgs::ImageConstPtr& depth_msg,image_geometry::PinholeCameraModel& cam_model){
-                // int n = objects.size()
-                // int height = depth_msg.height;
-                // int width = depth_msg.width;
-                // for (int i = 0; i<n; i++){
-                //   // if(segment_msg.data[i]) ==100{
-                //   if(depth_msg.data[i])<2.0{
-                //     Point object_coord;
-                //     int pix_x = i/height;
-                //     int pix_y = i%width;
-                //     cv::Point2d raw_pixel(pix_x, pix_y);
-                //     cv::Point2d rect_pixel= cam_model_.rectifyPoint(raw_pixel);
-                //     cv::Point3d ray = cam_model_.projectPixelTo3dRay(rect_pixel);
-                //     object_coord.x = ray.x;
-                //     object_coord.y = ray.y;
-                //     object_coord.z = depth_msg.data[i]
-                //     std::vector<point> object_space_centroids;
-                //     object_space_centroids.push_back(object_coord);
-                //   }
-                // }
-                // //create point vector of object space coordinates
-                // creatingBoundingGrid(object_space_centroids);
-              }
-
-void SemanticDepth::creatingBoundingGrid(std::vector<point> object_space_centroids){
-
-              // std::vector<point> object_space_coord;
-              // Point object_coord;
-              // for(auto& centroid:object_space_centroids){
-              //   object_space_coord.push_back(centroid);
-              //   object_coord(centroid.x + 1,centroid.y + 1);
-              //   object_space_coord.push_back(object_coord);
-              //   object_coord(centroid.x - 1,centroid.y + 1);
-              //   object_space_coord.push_back(centroid);
-              //   object_coord(centroid.x - 1,centroid.y - 1);
-              //   object_space_coord.push_back(object_coord);
-              //   object_coord(centroid.x + 1,centroid.y - 1);
-              //   object_space_coord.push_back(object_coord);
-              // }
-              // updateObjectGrid(object_space_coord);
-              }
-
-
-void SemanticDepth::updateFreeSpaceGrid(std::vector<point> free_space_coord){
-  //update free space from the free space point vector
-  // for(int i = 0; i < free_space_coord.size(); i++){
-  //   int* coordinates = coord2grid(free_space_coord[i].x,free_space_coord[i].y);
-  //   int index = coordinates[1] + coordinates[0]*width;
-  //   free_space_data_[index] = 0;
-  // }
-  // buildPublishFreeSpaceGrids();
 }
-void SemanticDepth::updateObjectGrid(std::vector<point> object_space_coord){
-  // std::vector<int> index_arr;
-  // for(int i = 0; i < object_space_coord.size(); i++){
-  //     int* coordinates = coord2grid(object_space_coord[i].x,object_space_coord[i].y);
-  //     int index = coordinates[1] + coordinates[0]*width;
-  //     index_arr.push_back(index);
-  // }
-  //
-  // for(int i = 0; i<object_space_data_.size();i++){
-  //   if (std::find(index_arr.begin(), index_arr.end(),i)!=index_arr.end()){
-  //     int8_t val = updateProb(object_space_data_[i],P_HIT);
-  //     map_data_[i] = val;
-  //   }
-  //   else{
-  //     int8_t val = updateProb(object_space_data_[i],P_MISS);
-  //     if(val < 10){
-  //       val = 20;
-  //     }
-  //     object_space_data_[i] = val;
-  //   }
-  // }
-  //
-  // //update object space coordinate from the space point vector
-}
-int* SemanticDepth::coord2grid(int8_t x, int8_t y){
-  // x = x*resolution*5;
-  // y = y*resolution*5;
-  // x = round(x);
-  // y = round(y);
-  // y = y+(width/2);
-  // y = y>(width-1)?(width-1):y;
-  // y = y<0?0:y;
-  // x = x>(height-1)?(height-1):x;
-  // static int coord[2];
-  // coord[0] = x;
-  // coord[1] = y;
-  // return coord;
-  // //convert world coordinates to grid coordinates
-}
-void SemanticDepth::updateProb(int8_t p_prior, int8_t p_curr){
-  // float prior_prob = static_cast<float>(p_prior);
-  // prior_prob = prior_prob/100;
-  // float curr_prob = static_cast<float>(p_curr);
-  // curr_prob = curr_prob/100;
-  // float res = (prior_prob/(1-prior_prob)) * (curr_prob/(1-curr_prob));
-  // res = res/(1+res);
-  // res = res*100;
-  //
-  // res = res<=0?1:res;
-  // res = res>=100?99:res;
-  // return (int8_t)res;
-  // //update probability of the grids based on confidence
-}
-void SemanticDepth::buildPublishFreeObjectGrids(){
-  // detection_confidence_map_.info.resolution = 0.1;         // float32
-  // detection_confidence_map_.info.width      = width;           // uint32
-  // detection_confidence_map_.info.height     = height;           // uint32
-  // detection_confidence_map_.data = object_detect_data;
-  // object_grid_pub_.publish(object_confidence_map_);
-  //
-  // //layer the grids on top of each other
+double depth_detect::SemanticDepth::magnitudeofRay(const cv::Point3d& ray){
+  return sqrt(pow(ray.x, 2.0) + pow(ray.y, 2.0) + pow(ray.z, 2.0));
 }
 
-void SemanticDepth::buildPublishFreeSpaceGrids(){
+void depth_detect::SemanticDepth::onePixelToReal(std::vector<darknet_ros_msgs::DetectionCoordinate> detections){
+  int d_size = detections.size();
+  double x_camera;
+  double y_camera;
+  int x_pixel;
+  int y_pixel;
+  double depth_val;
 
-  // freespace_confidence_map_.info.resolution = 0.1;         // float32
-  // freespace_confidence_map_.info.width      = width;           // uint32
-  // freespace_confidence_map_.info.height     = height;           // uint32
-  // freespace_confidence_map_.data = free_space_data_;
-  // freespace_grid_pub_.publish(freespace_confidence_map_);
+  cv::Point2d raw_pixel_center(cam_model_.cx(), cam_model_.cy());
+  cv::Point2d rect_pixel_center = cam_model_.rectifyPoint(raw_pixel_center);
+  cv::Point3d center_ray = cam_model_.projectPixelTo3dRay(rect_pixel_center);
 
+  std::vector<cam_point> detection_vec;
+
+  for(int i = 0; i < d_size; i++){
+
+    x_pixel = detections[i].xc_pixel;
+    y_pixel = detections[i].yc_pixel;
+    depth_val = detections[i].depth;
+    int id = detections[i].id;
+
+    cam_point cm_point;
+
+    cv::Point2d raw_pixel_point(x_pixel, y_pixel);
+    cv::Point2d rect_pixel_point = cam_model_.rectifyPoint(raw_pixel_point);
+    cv::Point3d pixel_ray = cam_model_.projectPixelTo3dRay(rect_pixel_point);
+
+    double theta = angleBetweenRays(pixel_ray,center_ray);
+    if(x_pixel<cam_model_.cx()){
+      theta = -theta;
+    }
+    ROS_INFO("the angle between the rays is : %f", theta);
+
+    //check for negative and positive angles of theta
+
+
+
+    double zc_real = depth_val;
+    double xc_real = depth_val * tan(theta);
+
+    cm_point.cx = xc_real;
+    cm_point.cz = zc_real;
+    cm_point.id = id;
+
+    detection_vec.push_back(cm_point);
+  }
+  ROS_INFO("the detected coordinate x center is %f",detection_vec[0].cx);
+  ROS_INFO("the detected coordinate y center is %f",detection_vec[0].cz);
+  onePixelGridUpdate(detection_vec);
+}
+
+void depth_detect::SemanticDepth::onePixelGridUpdate(std::vector<cam_point> detection_vec){
+cv::Mat map_data_ = cv::Mat::zeros(width_,height_,CV_8UC3);
+  for(auto point:detection_vec){
+    double cx = point.cx;
+    double cz = point.cz;
+    int id = point.id;
+    int* grid_coord = coord2grid(cx,cz);
+    int y_coord = grid_coord[1];
+    int x_coord = grid_coord[0];
+    // map_data_.at<Vec3b>(x_coord,y_coord)[0] = rand()%255;
+  if(id == 0){
+    map_data_.at<cv::Vec3b>(x_coord,y_coord)[0] = 250;
+  }
+  else if (id ==1){
+    map_data_.at<cv::Vec3b>(x_coord,y_coord)[1] = 250;
+  }
+  else {
+    map_data_.at<cv::Vec3b>(x_coord,y_coord)[2] = 250;
+  }
+  }
+  cv::resize(map_data_, map_data_, cv::Size(), 10, 10);
+  // cv::namedWindow( "Display window");// Create a window for display.
+  cv::imshow( "Display window", map_data_ );
+  cv::waitKey(10);
 
 }
 
+void depth_detect::SemanticDepth::pixelToReal(std::vector<darknet_ros_msgs::DetectionCoordinate> detections)
+{
+
+  int d_size = detections.size();
+  std::vector<double> x_camera;
+  std::vector<double> y_camera;
+  std::vector<int> x_pixels;
+  std::vector<int> y_pixels;
+  std::vector<double> depth_vals;
+
+  std::vector<obj_detections> detected_objects;
+
+  cv::Point2d raw_pixel_center(cam_model_.cx(), cam_model_.cy());
+  cv::Point2d rect_pixel_center = cam_model_.rectifyPoint(raw_pixel_center);
+  cv::Point3d center_ray = cam_model_.projectPixelTo3dRay(rect_pixel_center);
+
+  for(int i = 0; i < d_size; i++){
+    std::vector<cam_point> detection_vec;
+
+    x_pixels = detections[i].x_pixels;
+    y_pixels = detections[i].y_pixels;
+    depth_vals = detections[i].depths;
+    int id = detections[i].id;
+
+    int pixel_size = x_pixels.size();
+
+    for(int p = 0; p<pixel_size; p++){
+      cam_point cm_point;
+
+      int x_pixel = x_pixels[p];
+      int y_pixel = y_pixels[p];
+
+      cv::Point2d raw_pixel_point(x_pixel, y_pixel);
+      cv::Point2d rect_pixel_point = cam_model_.rectifyPoint(raw_pixel_point);
+      cv::Point3d pixel_ray = cam_model_.projectPixelTo3dRay(rect_pixel_point);
+
+      double theta = angleBetweenRays(pixel_ray,center_ray);
+
+      //check for negative and positive angles of theta
+
+      double depth = depth_vals[p];
+
+      // double theta = angleBetweenRays(pixel_ray,center_ray);
+      if(x_pixel<cam_model_.cx()){
+        theta = -theta;
+      }
+      // ROS_INFO("the angle between the rays is : %f", theta);
+
+      //check for negative and positive angles of theta
+
+
+
+      double zc_real = depth;
+      double xc_real = depth * tan(theta);
+
+      cm_point.cx = xc_real;
+      cm_point.cz = zc_real;
+      detection_vec.push_back(cm_point);
+    }
+    int vec_size = detection_vec.size();
+    // int index = vec_size/2;
+    // ROS_INFO("the detected coordinate x center is %f",detection_vec[index].cx);
+    // ROS_INFO("the detected coordinate y center is %f",detection_vec[index].cz);
+    obj_detections one_object;
+    one_object.detection_vec = detection_vec;
+    one_object.id = id;
+    detected_objects.push_back(one_object);
+  }
+  updateObjectGrid(detected_objects);
+
+}
+
+void depth_detect::SemanticDepth::updateObjectGrid(std::vector<obj_detections> detected_objects)
+{
+  cv::Mat map_data_ = cv::Mat::zeros(width_,height_,CV_8UC3);
+  int detection_size = detected_objects.size();
+  for(auto detection:detected_objects){
+    std::vector<cam_point> detection_vec = detection.detection_vec;
+    int id = detection.id;
+    for(auto point:detection_vec){
+      double cx = point.cx;
+      double cz = point.cz;
+      int* grid_coord = coord2grid(cx,cz);
+      int y_coord = grid_coord[1];
+      int x_coord = grid_coord[0];
+      // map_data_.at<Vec3b>(x_coord,y_coord)[0] = rand()%255;
+      if(id == 0){
+        map_data_.at<cv::Vec3b>(x_coord,y_coord)[0] = 250;
+      }
+      else if (id ==1){
+        map_data_.at<cv::Vec3b>(x_coord,y_coord)[1] = 250;
+      }
+      else {
+        map_data_.at<cv::Vec3b>(x_coord,y_coord)[2] = 250;
+      }
+      // map_data_.at<cv::Vec3b>(x_coord,y_coord)[0] = 250;
+    }
+    // ROS_INFO("got one object yay");
+  }
+  cv::resize(map_data_, map_data_, cv::Size(), 5, 5);
+  // cv::namedWindow( "Display window");// Create a window for display.
+  cv::imshow( "Display window", map_data_ );
+  cv::waitKey(10);
+
+}
+int* depth_detect::SemanticDepth::coord2grid(double cx, double cz)
+{
+  double x = cz;
+  double y = cx;
+  x = x/1000;
+  y = y/1000;
+  x = x*resolution_;
+  y = y*resolution_;
+  y = y+(width_/2);
+  y = y>(width_-1)?(width_-1):y;
+  y = y<0?0:y;
+  x = x>(height_-1)?(height_-1):x;
+  static int coord[2];
+  coord[0] = x;
+  coord[1] = y;
+  return coord;
+}
+
+void depth_detect::SemanticDepth::buildGrids(){
+
+}
+void depth_detect::SemanticDepth::publishGrids(){
+
+}
+void depth_detect::SemanticDepth::publishImages(){
+
+}
 
 int main(int argc, char** argv) {
     int8_t label = 100;
@@ -159,7 +230,7 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "semantic_depth_node");
     ros::NodeHandle n;
 
-    SemanticDepth semantic_obj(n);
+    depth_detect::SemanticDepth semantic_obj(n);
 
     while(ros::ok()){
       ros::spinOnce();

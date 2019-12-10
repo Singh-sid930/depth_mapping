@@ -3,6 +3,9 @@ project(depth_mapping)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
  add_compile_options(-std=c++11)
+ add_compile_options(-std=c99)
+ add_compile_options(-g)
+ add_compile_options(-lm)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -17,6 +20,10 @@ find_package(catkin REQUIRED COMPONENTS
 	cv_bridge
 	nav_msgs
   message_generation
+	darknet_ros_msgs
+	dynamic_reconfigure
+	image_geometry
+	image_transport
 )
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV)
@@ -58,8 +65,6 @@ find_package(OpenCV)
  add_message_files(
    FILES
    scan_range.msg
-   object_detect.msg
-
  )
 
 ## Generate services in the 'srv' folder
@@ -112,9 +117,9 @@ find_package(OpenCV)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
 #  LIBRARIES depth_mapping
-  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs message_runtime darknet_ros_msgs dynamic_reconfigure image_geometry image_transport
 #  DEPENDS system_lib
 )
 
@@ -145,8 +150,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
  add_executable(grid_builder src/depth_detect.cpp)
- add_executable(semantic_grid_builder src/semantic_depth.cpp)
  add_executable(lidar_processing_node src/lidar_processing.cpp)
+ add_executable(semantic_grid src/semantic_depth.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -163,13 +168,15 @@ include_directories(
 target_link_libraries(grid_builder
    ${catkin_LIBRARIES}
  )
+
 target_link_libraries(lidar_processing_node
    ${catkin_LIBRARIES}
  )
 
-target_link_libraries(semantic_grid_builder
-   ${catkin_LIBRARIES}
- )
+ target_link_libraries(semantic_grid
+    ${catkin_LIBRARIES}
+  )
+
 
 #############
 ## Install ##

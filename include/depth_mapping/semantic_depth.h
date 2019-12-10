@@ -1,95 +1,88 @@
-
-
-//C++ and ros headers
-#include <vector>
-#include <iostream>
-#include <math.h>
-#include <algorithm>
-#include "ros/ros.h"
-
-// Sensor Message headers
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud_conversion.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/CompressedImage.h>
-#include <sensor_msgs/CameraInfo.h>
-
-//Image transport headers
-#include <image_transport/image_transport.h>
-#include "image_geometry/pinhole_camera_model.h"
-//boost headers
-#include <boost/thread/mutex.hpp>
-#include <boost/bind.hpp>
-
-//reconfiguration server headers
-#include <dynamic_reconfigure/server.h>
-
-// navigation and planning messages
 #include <nav_msgs/OccupancyGrid.h>
-
-// Message filters
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <depth_mapping/object_detect.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <boost/bind.hpp>
+#include "ros/ros.h"
+#include "image_geometry/pinhole_camera_model.h"
+#include <darknet_ros_msgs/DetectionCoordinate.h>
+#include <darknet_ros_msgs/DetectionCoordinates.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <iostream>
 
 
 
-
-
-
-struct point{
-  int x;
-  int y;
-  int z;
-  point(): x(0),y(0),z(0){};
-  point(int x, int y, int z):x(x),y(y),z(z){};
+struct cam_point{
+  double cx;
+  double cz;
+  int id;
+  cam_point(): cx(0),cz(0),id(0){};
+  cam_point(double x , double z):cx(x),cz(z){};
 };
 
+struct obj_detections{
+  std::vector<cam_point> detection_vec;
+  int id;
+  obj_detections(){};
+  obj_detections(std::vector<cam_point> cam_p, int id): detection_vec(cam_p), id(id){};
+};
 
+namespace depth_detect{
 class SemanticDepth{
+
 public:
-  SemanticDepth(ros::NodeHandle& pnh):pnh_(pnh),
-                                      image_object_sub(pnh_.subscribe("/detections",1,&SemanticDepth::objectDepthCb,this))
-                                      {
-    ROS_INFO("semantic depth map creator is set up. Will start publishing the grid now ..............");
+
+  SemanticDepth(ros::NodeHandle& pnh):pnh_(pnh),coordinate_sub(pnh_.subscribe("/darknet_ros/coordinates",1,&depth_detect::SemanticDepth::depthCb, this)),
+                                                info_sub(pnh_.subscribe("camera/color/camera_info", 1, &depth_detect::SemanticDepth::cameraCb,this)){
+    // cv::Mat mat1 = cv::Mat::ones(3,4,CV_32FC1);
+    // mat1 = mat1 * 200;
+    // cv::imshow("test", mat1);
+    // cv::waitKey(0);
+    // cv::Mat test_data_{cv::Mat::zeros(width_,height_,CV_8UC1)};
+    // cv::imshow( "Display window", test_data_ );
+    // cv::waitKey(0);
+
+
+    ROS_INFO("semantic depth map creator is set up. Will start publishing the grid now .....");
   }
+
 private:
-  const int8_t P_HIT  =  60;
-  const int8_t P_MISS = 30;
-  const int height = 100;
-  const int width = 100;
-  const int resolution = 5;
 
   ros::NodeHandle pnh_;
-  ros::Subscriber image_object_sub;
-  sensor_msgs::Image image;
-  sensor_msgs::CameraInfo cinfo;
-  std::vector<float> detections;
+  image_geometry::PinholeCameraModel cam_model_; ///< image_geometry helper class for managing sensor_msgs/CameraInfo messages.
+  ros::Subscriber coordinate_sub;
+  ros::Subscriber info_sub;
 
-  nav_msgs::OccupancyGrid detection_confidence_map_;
-  nav_msgs::OccupancyGrid freespace_confidence_map_;
 
-  std::vector<int8_t> free_space_data_{std::vector<int8_t>(height*width,100)};
-  std::vector<int8_t> object_detect_data {std::vector<int8_t>(height*width,50)};
+  void depthCb(const darknet_ros_msgs::DetectionCoordinates& msg){
+        std::vector<darknet_ros_msgs::DetectionCoordinate> detections_ = msg.detection_coordinates;
 
-  // std::vector<point> free_space_coord;
-  // std::vector<point> object_space_coord;
+        if(detections_.size()!= 0){
+        // onePixelToReal(detections_);
+        pixelToReal(detections_);
+      }
 
-  void objectDepthCb(const depth_mapping::object_detect::ConstPtr& msg)
-          {
+  }
 
-        }
+  void cameraCb(const sensor_msgs::CameraInfoConstPtr& info_msg){
+    cam_model_.fromCameraInfo(info_msg);
+  }
 
-  void freeSpaceCoord(const sensor_msgs::ImageConstPtr& depth_msg,const sensor_msgs::ImageConstPtr& segment_msg,image_geometry::PinholeCameraModel& cam_model);
-  void objectCoord(const sensor_msgs::ImageConstPtr& depth_msg,image_geometry::PinholeCameraModel& cam_model);
-  void creatingBoundingGrid(std::vector<point> object_space_centroids);
-  void updateFreeSpaceGrid(std::vector<point> free_space_coord);
-  void updateObjectGrid(std::vector<point> object_space_coord);
-  int* coord2grid(int8_t x, int8_t y);
-  void updateProb(int8_t p_prior, int8_t p_curr);
-  void buildPublishFreeSpaceGrids();
-  void buildPublishFreeObjectGrids();
-
+  int height_ = 50;
+  int width_ = 50;
+  int resolution_ = 5;
+  // cv::Mat map_data_{cv::Mat::zeros(width_,height_,CV_8UC1)};
+  void pixelToReal(std::vector<darknet_ros_msgs::DetectionCoordinate> detections);
+  void onePixelToReal(std::vector<darknet_ros_msgs::DetectionCoordinate> detections);
+  double angleBetweenRays(const cv::Point3d& ray1, const cv::Point3d& ray2);
+  double magnitudeofRay(const cv::Point3d& ray);
+  void updateObjectGrid(std::vector<obj_detections> detected_objects);
+  void onePixelGridUpdate(std::vector<cam_point> detection_vec);
+  int* coord2grid(double cx, double cz);
+  void buildGrids();
+  void publishGrids();
+  void publishImages();
 };
+}
